@@ -18,7 +18,7 @@ sed -i 's/#X11DisplayOffset 10/X11DisplayOffset 10/g' /etc/ssh/sshd_config && \
 sed -i 's/#X11UseLocalhost yes/X11UseLocalhost no/g' /etc/ssh/sshd_config && \
 systemctl enable sshd && \
 echo "root" | sudo passwd --stdin root && \
-useradd -m developer && \
+useradd -m -s /usr/bin/fish developer && \
 usermod -a -G wheel developer && \
 echo "developer" | passwd --stdin developer && \
 sed -i 's/%wheel  ALL=(ALL)       ALL/# %wheel  ALL=(ALL)       ALL/g' /etc/sudoers && \
@@ -29,7 +29,6 @@ cp -r /root/example_notebook.ipynb /home/developer/ && \
 cp -r /root/start_jupyter.sh /home/developer/ && \
 chown -R developer:developer /home/developer && \
 alias ll='ls -alF' && \
-echo -n 'developer' | chsh -s /usr/bin/fish && \
 mkdir -p /opt/jetbrain && \
 wget https://download.jetbrains.com/idea/ideaIC-2021.1.1.tar.gz?_ga=2.215325460.2032521094.1620555958-942613243.1603954277 -O /opt/jetbrain/idea.tar.gz && \
 tar xzvf /opt/jetbrain/idea.tar.gz -C /opt/jetbrain/ && \
@@ -55,9 +54,23 @@ ENV container=docker \
 JAVA_HONE=/usr/lib/jvm/java-1.8.0
 
 
+RUN echo "#!/bin/bash" > /startup.sh && \
+echo "" >> /startup.sh && \
+echo "export PYSPARK_PYTHON=python3" >> /startup.sh && \
+echo "export PYSPARK_DRIVER_PYTHON=python3" >> /startup.sh && \
+echo "" >> /startup.sh && \
+echo "cd /home/developer/" >> /startup.sh && \
+echo "" >> /startup.sh && \
+echo "sudo -u developer /usr/local/bin/jupyter notebook &" >> /startup.sh && \
+echo "exec /usr/sbin/init" >> /startup.sh && \
+chmod +x /startup.sh
+
 EXPOSE 22 8888
 
-ENTRYPOINT ["/usr/sbin/init"]
+#ENTRYPOINT ["/usr/sbin/init"]
 #ENTRYPOINT ["/home/developer/start_jupyter.sh"]
+#CMD ["/home/developer/start_jupyter.sh"]
+#CMD ["/bin/bash", "-c", "/root/start_jupyter.sh && /usr/sbin/init"]
+ENTRYPOINT ["/startup.sh"]
 
 # To run it: docker run -d -p 22:22 --privileged=true --name dev_env -it ofrir119/developer_env:idea2021.1.1_spark2.4.0
