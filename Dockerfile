@@ -27,11 +27,11 @@ cp -r /root/.jupyter /home/developer/ && \
 cp -r /root/IdeaProjects /home/developer/ && \
 cp -r /root/example_notebook.ipynb /home/developer/ && \
 chown -R developer:developer /home/developer && \
-alias ll='ls -alF' && \
 mkdir -p /opt/jetbrain && \
 wget https://download.jetbrains.com/idea/ideaIC-2021.1.1.tar.gz?_ga=2.215325460.2032521094.1620555958-942613243.1603954277 -O /opt/jetbrain/idea.tar.gz && \
 tar xzvf /opt/jetbrain/idea.tar.gz -C /opt/jetbrain/ && \
 mv /opt/jetbrain/idea-IC* /opt/jetbrain/idea && \
+rm /opt/jetbrain/idea.tar.gz && \
 echo '#!/bin/sh' | tee /usr/bin/idea && \
 echo '' | tee -a /usr/bin/idea && \
 echo 'export PYSPARK_PYTHON=python3' | tee -a /usr/bin/idea && \
