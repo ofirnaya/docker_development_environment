@@ -26,7 +26,6 @@ sed -i 's/# %wheel        ALL=(ALL)       NOPASSWD: ALL/%wheel        ALL=(ALL) 
 cp -r /root/.jupyter /home/developer/ && \
 cp -r /root/IdeaProjects /home/developer/ && \
 cp -r /root/example_notebook.ipynb /home/developer/ && \
-cp -r /root/start_jupyter.sh /home/developer/ && \
 chown -R developer:developer /home/developer && \
 alias ll='ls -alF' && \
 mkdir -p /opt/jetbrain && \
@@ -41,36 +40,22 @@ echo '' | tee -a /usr/bin/idea && \
 echo 'nohup /opt/jetbrain/idea/bin/idea.sh > /tmp/idea.log &' | tee -a /usr/bin/idea && \
 chmod +x /usr/bin/idea && \
 chmod +x /opt/jetbrain/idea/bin/idea.sh && \
-echo '#!/bin/sh' | tee /root/start_jupyter.sh && \
-echo '' | tee -a /root/start_jupyter.sh && \
-echo 'export PYSPARK_PYTHON=python3' | tee -a /root/start_jupyter.sh && \
-echo 'export PYSPARK_DRIVER_PYTHON=python3' | tee -a /root/start_jupyter.sh && \
-echo '' | tee -a /root/start_jupyter.sh && \
-echo 'jupyter notebook --allow-root' | tee -a /root/start_jupyter.sh && \
-chmod +x /root/start_jupyter.sh && \
-pip3 install pyspark==2.4.0 pyspark-stubs==2.4.0 jupyter
+pip3 install pyspark==2.4.0 pyspark-stubs==2.4.0 jupyter && \
+ssh-keygen -A && \
+echo "#!/bin/bash" > /startup.sh && \
+echo "" >> /startup.sh && \
+echo "/usr/sbin/sshd" >> /startup.sh && \
+echo "/root/start_jupyter.sh" >> /startup.sh && \
+chmod +x /startup.sh && \
+yum clean all && \
+rm -rf /var/cache/yum
+
 
 ENV container=docker \
 JAVA_HONE=/usr/lib/jvm/java-1.8.0
 
+EXPOSE 22022 8888
 
-RUN echo "#!/bin/bash" > /startup.sh && \
-echo "" >> /startup.sh && \
-echo "export PYSPARK_PYTHON=python3" >> /startup.sh && \
-echo "export PYSPARK_DRIVER_PYTHON=python3" >> /startup.sh && \
-echo "" >> /startup.sh && \
-echo "cd /home/developer/" >> /startup.sh && \
-echo "" >> /startup.sh && \
-echo "sudo -u developer /usr/local/bin/jupyter notebook &" >> /startup.sh && \
-echo "exec /usr/sbin/init" >> /startup.sh && \
-chmod +x /startup.sh
-
-EXPOSE 22 8888
-
-#ENTRYPOINT ["/usr/sbin/init"]
-#ENTRYPOINT ["/home/developer/start_jupyter.sh"]
-#CMD ["/home/developer/start_jupyter.sh"]
-#CMD ["/bin/bash", "-c", "/root/start_jupyter.sh && /usr/sbin/init"]
 ENTRYPOINT ["/startup.sh"]
 
-# To run it: docker run -d -p 22:22 --privileged=true --name dev_env -it ofrir119/developer_env:idea2021.1.1_spark2.4.0
+# To run it: docker run -d -p 22022:22 --name dev_env -it ofrir119/developer_env:idea2021.1.1_spark2.4.0
