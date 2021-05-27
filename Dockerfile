@@ -37,7 +37,7 @@ echo '' | tee -a /usr/bin/idea && \
 echo 'export PYSPARK_PYTHON=python3' | tee -a /usr/bin/idea && \
 echo 'export PYSPARK_DRIVER_PYTHON=python3' | tee -a /usr/bin/idea && \
 echo '' | tee -a /usr/bin/idea && \
-echo 'nohup /opt/jetbrain/idea/bin/idea.sh > /tmp/idea.log &' | tee -a /usr/bin/idea && \
+echo 'nohup /opt/jetbrain/idea/bin/idea.sh > /tmp/$(whoami)_idea.log &' | tee -a /usr/bin/idea && \
 chmod +x /usr/bin/idea && \
 chmod +x /opt/jetbrain/idea/bin/idea.sh && \
 pip3 install pyspark==2.4.0 pyspark-stubs==2.4.0 jupyter && \
@@ -54,7 +54,7 @@ rm -rf /var/cache/yum
 ENV container=docker \
 JAVA_HONE=/usr/lib/jvm/java-1.8.0
 
-EXPOSE 22022 8888
+EXPOSE 22 8888
 
 ENTRYPOINT ["/startup.sh"]
 
