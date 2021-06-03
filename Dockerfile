@@ -1,5 +1,7 @@
 From centos:centos7
 
+LABEL MAINTAINER="Ofir Ofri"
+
 ADD example_apps.tar /root/
 
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
@@ -21,8 +23,8 @@ echo "root" | sudo passwd --stdin root && \
 useradd -m -s /usr/bin/fish developer && \
 usermod -a -G wheel developer && \
 echo "developer" | passwd --stdin developer && \
-sed -i 's/%wheel  ALL=(ALL)       ALL/# %wheel  ALL=(ALL)       ALL/g' /etc/sudoers && \
-sed -i 's/# %wheel        ALL=(ALL)       NOPASSWD: ALL/%wheel        ALL=(ALL)       NOPASSWD: ALL/g' /etc/sudoers && \
+sed -i 's/%wheel\tALL=(ALL)\tALL/# %wheel\tALL=(ALL)\tALL/g' /etc/sudoers && \
+sed -i 's/# %wheel\tALL=(ALL)\tNOPASSWD: ALL/%wheel\tALL=(ALL)\tNOPASSWD: ALL/g' /etc/sudoers && \
 cp -r /root/.jupyter /home/developer/ && \
 cp -r /root/IdeaProjects /home/developer/ && \
 cp -r /root/example_notebook.ipynb /home/developer/ && \
