@@ -1,60 +1,58 @@
-From centos:centos7
+From ubuntu:kinetic
 
 LABEL MAINTAINER="Ofir Ofri"
 
+ENV container=docker \
+JAVA_HONE=/usr/lib/jvm/java-11-openjdk-amd64
+
+ARG SPARK_VERSION=3.3.1 \
+SPARK_JARS_DIR="/usr/local/lib/python3.10/dist-packages/pyspark/jars"
+
 ADD example_apps.tar /root/
 
-RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
-systemd-tmpfiles-setup.service ] || rm -f $i; done) && \
-rm -f /lib/systemd/system/multi-user.target.wants/* && \
-rm -f /etc/systemd/system/*.wants/* && \
-rm -f /lib/systemd/system/local-fs.target.wants/* && \
-rm -f /lib/systemd/system/sockets.target.wants/*udev* && \
-rm -f /lib/systemd/system/sockets.target.wants/*initctl* && \
-rm -f /lib/systemd/system/basic.target.wants/* &&\
-rm -f /lib/systemd/system/anaconda.target.wants/* && \
-yum -y update && \
-yum install -y epel-release && \
-yum install -y openssh-server openssh-client xorg-x11* wget sudo python3 java-1.8.0-openjdk java-1.8.0-openjdk-devel nc git fish && \
+RUN apt-get update -y && \
+apt-get install -y openjdk-11-jdk openssh-server wget sudo git vim python3-pip curl unzip maven && \
 sed -i 's/#X11DisplayOffset 10/X11DisplayOffset 10/g' /etc/ssh/sshd_config && \
 sed -i 's/#X11UseLocalhost yes/X11UseLocalhost no/g' /etc/ssh/sshd_config && \
-systemctl enable sshd && \
-echo "root" | sudo passwd --stdin root && \
-useradd -m -s /usr/bin/fish developer && \
-usermod -a -G wheel developer && \
-echo "developer" | passwd --stdin developer && \
-sed -i 's/%wheel\tALL=(ALL)\tALL/# %wheel\tALL=(ALL)\tALL/g' /etc/sudoers && \
-sed -i 's/# %wheel\tALL=(ALL)\tNOPASSWD: ALL/%wheel\tALL=(ALL)\tNOPASSWD: ALL/g' /etc/sudoers && \
-cp -r /root/.jupyter /home/developer/ && \
-cp -r /root/IdeaProjects /home/developer/ && \
-cp -r /root/example_notebook.ipynb /home/developer/ && \
-chown -R developer:developer /home/developer && \
-mkdir -p /opt/jetbrain && \
-wget https://download.jetbrains.com/idea/ideaIC-2021.1.1.tar.gz?_ga=2.215325460.2032521094.1620555958-942613243.1603954277 -O /opt/jetbrain/idea.tar.gz && \
-tar xzvf /opt/jetbrain/idea.tar.gz -C /opt/jetbrain/ && \
-mv /opt/jetbrain/idea-IC* /opt/jetbrain/idea && \
-rm /opt/jetbrain/idea.tar.gz && \
-echo '#!/bin/sh' | tee /usr/bin/idea && \
-echo '' | tee -a /usr/bin/idea && \
-echo 'export PYSPARK_PYTHON=python3' | tee -a /usr/bin/idea && \
-echo 'export PYSPARK_DRIVER_PYTHON=python3' | tee -a /usr/bin/idea && \
-echo '' | tee -a /usr/bin/idea && \
-echo 'nohup /opt/jetbrain/idea/bin/idea.sh > /tmp/$(whoami)_idea.log &' | tee -a /usr/bin/idea && \
-chmod +x /usr/bin/idea && \
-chmod +x /opt/jetbrain/idea/bin/idea.sh && \
-pip3 install pyspark==2.4.0 pyspark-stubs==2.4.0 jupyter && \
+echo "root:root" | chpasswd && \
+useradd -s /bin/bash -m developer && \
+usermod -aG sudo developer && \
+echo "developer:developer" | chpasswd && \
+sed -i 's/%sudo\tALL=(ALL:ALL) ALL/%sudo\tALL=(ALL) NOPASSWD:ALL/g' /etc/sudoers && \
+rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+unzip awscliv2.zip && \
+sudo ./aws/install && \
+rm awscliv2.zip && \
+rm -rf aws
+
+RUN pip install --no-cache-dir pyspark==${SPARK_VERSION} ipykernel && \
+pip install --no-cache-dir --upgrade jedi==0.17.2 && \
+pip install --no-cache-dir kafka-python && \
+wget "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.1/hadoop-aws-3.3.1.jar" -O ${SPARK_JARS_DIR}/hadoop-aws-3.3.1.jar && \
+wget "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar" -O ${SPARK_JARS_DIR}/aws-java-sdk-bundle-1.11.901.jar && \
 ssh-keygen -A && \
+echo "export PYSPARK_PYTHON=python3" >> /etc/bashrc && \
+echo "export PYSPARK_DRIVER_PYTHON=python3" >> /etc/bashrc && \
+echo "export HADOOP_CONF_DIR=/etc/hadoop/conf" >> /etc/bashrc && \
+echo "export PYSPARK_PYTHON=python3" >> /home/developer/.bashrc && \
+echo "export PYSPARK_DRIVER_PYTHON=python3" >> /home/developer/.bashrc && \
+echo "export HADOOP_CONF_DIR=/etc/hadoop/conf" >> /home/developer/.bashrc && \
 echo "#!/bin/bash" > /startup.sh && \
 echo "" >> /startup.sh && \
-echo "/usr/sbin/sshd" >> /startup.sh && \
-echo "/root/start_jupyter.sh" >> /startup.sh && \
-chmod +x /startup.sh && \
-yum clean all && \
-rm -rf /var/cache/yum
+echo "service ssh start" >> /startup.sh && \
+echo "tail -f /dev/null" >> /startup.sh && \
+echo "" >> /etc/bashrc && \
+echo "# Added for image" >> /etc/bashrc && \
+chmod +x /startup.sh
 
 
-ENV container=docker \
-JAVA_HONE=/usr/lib/jvm/java-1.8.0
+RUN cp -r /root/projects /home/developer/ && \
+cp -r /root/notebooks /home/developer/ && \
+mkdir -p /etc/hadoop/conf && \
+cp /root/core-site.xml /etc/hadoop/conf/ && \
+chown -R developer:developer /home/developer
 
 EXPOSE 22 8888
 
