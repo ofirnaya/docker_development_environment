@@ -5,7 +5,7 @@ LABEL MAINTAINER="Ofir Ofri"
 ENV container=docker \
 JAVA_HONE=/usr/lib/jvm/java-11-openjdk-amd64
 
-ARG SPARK_VERSION=3.3.1 \
+ARG SPARK_VERSION=3.4.0 \
 SPARK_JARS_DIR="/usr/local/lib/python3.10/dist-packages/pyspark/jars"
 
 ADD example_apps.tar /root/
@@ -27,7 +27,7 @@ sudo ./aws/install && \
 rm awscliv2.zip && \
 rm -rf aws
 
-RUN pip install --no-cache-dir pyspark==${SPARK_VERSION} ipykernel && \
+RUN pip install --no-cache-dir pyspark==${SPARK_VERSION} ipykernel jupyter jupyterlab && \
 pip install --no-cache-dir --upgrade jedi==0.17.2 && \
 pip install --no-cache-dir kafka-python && \
 wget "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.1/hadoop-aws-3.3.1.jar" -O ${SPARK_JARS_DIR}/hadoop-aws-3.3.1.jar && \
