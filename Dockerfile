@@ -42,13 +42,14 @@ echo "export HADOOP_CONF_DIR=/etc/hadoop/conf" >> /home/developer/.bashrc && \
 echo "#!/bin/bash" > /startup.sh && \
 echo "" >> /startup.sh && \
 echo "service ssh start" >> /startup.sh && \
-echo "tail -f /dev/null" >> /startup.sh && \
+echo "/root/start_jupyter.sh" >> /startup.sh && \
 echo "" >> /etc/bashrc && \
 echo "# Added for image" >> /etc/bashrc && \
 chmod +x /startup.sh
 
 
-RUN cp -r /root/projects /home/developer/ && \
+RUN cp -r /root/.jupyter /home/developer/ && \
+cp -r /root/projects /home/developer/ && \
 cp -r /root/notebooks /home/developer/ && \
 mkdir -p /etc/hadoop/conf && \
 cp /root/core-site.xml /etc/hadoop/conf/ && \
@@ -58,4 +59,6 @@ EXPOSE 22 8888
 
 ENTRYPOINT ["/startup.sh"]
 
-# To run it: docker run -d -p 22022:22 --name dev_env -it ofrir119/developer_env:idea2021.1.1_spark2.4.0
+# To build it: docker build -t ofrir119/developer_env:spark340_ssh .
+# To run it: docker run -d -p 22022:22 -p 8888:8888 --name dev_env -it ofrir119/developer_env:spark340_ssh
+
